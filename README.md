@@ -27,6 +27,54 @@ pip3 install PyQt5 requests pyyaml
 - Všechny potřebné soubory (`context1.txt`, `test_core_messenger_and_inbox.yaml`, `endpoint.txt`) se ukládají automaticky do aktuální složky.
 - Aplikace je přenositelná a nevyžaduje žádné úpravy kódu.
 
+## Formát YAML souboru
+
+YAML soubor s testovacími scénáři musí mít následující strukturu:
+
+```yaml
+tests:
+  default:
+    - id: 1
+      question: "Tvoje testovací otázka?"
+      expected_keywords:
+        - "klíčové slovo 1"
+        - "klíčové slovo 2"
+        - "klíčové slovo 3"
+
+    - id: 2
+      question: "Další testovací otázka?"
+      expected_keywords:
+        - "další klíčové slovo"
+        - "ještě jedno"
+```
+
+### Struktura testu:
+- **`tests:`** - Hlavní klíč pro všechny testy
+- **`default:`** - Sekce obsahující seznam testů
+- **`id:`** - Jedinečné číslo testu (číslo)
+- **`question:`** - Otázka, která se pošle chatbotu (text v uvozovkách)
+- **`expected_keywords:`** - Seznam očekávaných klíčových slov, která by měla být v odpovědi (seznam řetězců)
+
+### Příklad:
+```yaml
+tests:
+  default:
+    - id: 1
+      question: "Jaké aplikace jsou součástí ekosystému Core.Admin?"
+      expected_keywords:
+        - "Core.Admin"
+        - "Core.Admin.Api"
+        - "Core.ARR"
+        - "Core.Persona"
+        - "Core.Identity"
+```
+
+**Důležité:**
+- Každý test musí mít unikátní `id`
+- `question` musí být v uvozovkách
+- `expected_keywords` je seznam, každé klíčové slovo na samostatném řádku s pomlčkou
+- Odsazení musí být konzistentní (doporučeno 2 mezery)
+
 ## Poznámky
 - Pokud používáš Windows, změň příkaz `python3` na `python` podle své instalace.
 - Pro balení do .app nebo .exe lze použít PyInstaller nebo Platypus (návod na vyžádání).
