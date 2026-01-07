@@ -9,7 +9,6 @@ tests:
         - "Core.Persona"
         - "Core.Identity"
 
-
     - id: 2
       question: "Na čem je DeployInfo vždy závislé?"
       expected_keywords:
@@ -17,3 +16,62 @@ tests:
         - "lokalizace"
         - "prostředí"
         - "kombinace"
+
+    - id: 3
+      question: "Co určuje DeployInfo XML soubor?"
+      expected_keywords:
+        - "IIS"
+        - "cesty deploymentu"
+        - "konfigurace instance"
+
+    - id: 4
+      question: "Jaké informace obsahuje element <deploypath>?"
+      expected_keywords:
+        - "cesta"
+        - "verze instance"
+        - "weby"
+
+    - id: 5
+      question: "Jaké konfigurace se definují pro jednotlivé weby v DeployInfo?"
+      expected_keywords:
+        - "application pool"
+        - "bindings"
+        - "host header"
+        - "port"
+
+    - id: 6
+      question: "Co je potřeba zkontrolovat, pokud Admin.Api nefunguje?"
+      expected_keywords:
+        - "AppName"
+        - "Path=\"/api\""
+        - "parent web"
+        - "validovat API"
+
+    - id: 7
+      question: "Co dělat, když aplikace Core.Admin nejede?"
+      expected_keywords:
+        - "IIS bindings"
+        - "host header"
+        - "target cesta"
+        - "validitu XML"
+
+    - id: 8
+      question: "Jak ověřit, že databáze je správně nastavená?"
+      expected_keywords:
+        - "<deployinfo database"
+        - "porovnat s dokumentací"
+        - "Confluence"
+
+    - id: 9
+      question: "Jaký problém může způsobit nesprávný host header v DeployInfo?"
+      expected_keywords:
+        - "aplikace nejede"
+        - "IIS bindings"
+        - "chybný host header"
+
+    - id: 10
+      question: "Co je prvním krokem při troubleshootingu, když API neodpovídá?"
+      expected_keywords:
+        - "zkontrolovat AppName"
+        - "Path=\"/api\""
+        - "běží pod správným parent webem"

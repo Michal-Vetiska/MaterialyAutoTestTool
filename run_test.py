@@ -69,8 +69,10 @@ for difficulty, tests in data["tests"].items():
         question = t["question"]
         expected = t["expected_keywords"]
         print(f"\nQ: {question}")
+        # Vypiš start progress před zpracováním otázky
+        print(f"PROGRESS_START: {current_test}/{total_tests}", flush=True)
         answer = ask_question(question, context)
-        # Vypiš progress až po získání odpovědi od modelu
+        # Vypiš finální progress po získání odpovědi od modelu
         print(f"PROGRESS: {current_test}/{total_tests}", flush=True)
         print(f"A: {answer}")
         passed = evaluate_answer(answer, expected)
