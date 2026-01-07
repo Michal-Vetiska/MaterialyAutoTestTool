@@ -1,7 +1,7 @@
 import os
 import sys
 from PyQt5.QtWidgets import (
-    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QPushButton, QMessageBox, QSizePolicy, QLineEdit, QFrame, QSlider, QScrollArea, QDialog, QTextEdit, QPushButton
+    QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QTextEdit, QPushButton, QMessageBox, QSizePolicy, QLineEdit, QFrame, QSlider, QScrollArea, QDialog, QTextEdit, QPushButton, QFileDialog, QProgressBar
 )
 from PyQt5.QtGui import QFont, QIcon, QMovie
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
@@ -11,6 +11,7 @@ import re
 class TestRunnerThread(QThread):
     line_signal = pyqtSignal(str)
     finished_signal = pyqtSignal(str)
+    progress_signal = pyqtSignal(int, int)  # current, total
 
     def run(self):
         self.result = ''
@@ -20,6 +21,16 @@ class TestRunnerThread(QThread):
                 for line in process.stdout:
                     self.result += line
                     self.line_signal.emit(line)
+                    # Parsuj progress zprávy (formát: PROGRESS: current/total)
+                    if line.startswith('PROGRESS:'):
+                        try:
+                            parts = line.split('PROGRESS:')[1].strip().split('/')
+                            if len(parts) == 2:
+                                current = int(parts[0].strip())
+                                total = int(parts[1].strip())
+                                self.progress_signal.emit(current, total)
+                        except (ValueError, IndexError):
+                            pass
             process.wait()
         except Exception as e:
             self.result += f'Chyba při spouštění: {e}\n'
@@ -41,12 +52,56 @@ class LoadingOverlay(QWidget):
         self.spinner.setMovie(spinner_gif)
         spinner_gif.start()
         layout.addWidget(self.spinner)
-        label = QLabel('Probíhá testování…')
-        label.setFont(QFont('Segoe UI', 18, QFont.Bold))
-        label.setStyleSheet('color: #1976d2; padding: 12px;')
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(label)
+        self.label = QLabel('Probíhá testování…')
+        self.label.setFont(QFont('Segoe UI', 18, QFont.Bold))
+        self.label.setStyleSheet('color: #1976d2; padding: 12px;')
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.label)
+        
+        # Progress bar
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setMinimum(0)
+        self.progress_bar.setMaximum(100)
+        self.progress_bar.setValue(0)
+        self.progress_bar.setStyleSheet("""
+            QProgressBar {
+                border: 2px solid #1976d2;
+                border-radius: 8px;
+                text-align: center;
+                background-color: #e3f2fd;
+                height: 30px;
+                width: 400px;
+            }
+            QProgressBar::chunk {
+                background-color: #1976d2;
+                border-radius: 6px;
+            }
+        """)
+        self.progress_bar.setFormat('%p%')
+        self.progress_bar.hide()
+        layout.addWidget(self.progress_bar)
+        
+        # Progress text
+        self.progress_label = QLabel('')
+        self.progress_label.setFont(QFont('Segoe UI', 14))
+        self.progress_label.setStyleSheet('color: #1976d2; padding: 8px;')
+        self.progress_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.progress_label.hide()
+        layout.addWidget(self.progress_label)
+        
         self.setLayout(layout)
+        
+    def update_progress(self, current, total):
+        if total > 0:
+            percentage = int((current / total) * 100)
+            self.progress_bar.setMaximum(100)
+            self.progress_bar.setValue(percentage)
+            self.progress_bar.show()
+            self.progress_label.setText(f'Otázka {current} z {total}')
+            self.progress_label.show()
+        else:
+            self.progress_bar.hide()
+            self.progress_label.hide()
 
     def resource_path(self, relative):
         # Umožní použít spinner.gif i po zabalení aplikace
@@ -134,11 +189,20 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 """
         self.context1_text.setStyleSheet(self.context1_text.styleSheet() + modern_scrollbar)
         main_layout.addWidget(self.context1_text)
+        # Tlačítka pro vložení materiálu
+        buttons_layout = QHBoxLayout()
         paste1_btn = QPushButton('Vložit ze schránky')
         paste1_btn.setFont(font_button)
         paste1_btn.setStyleSheet('border-radius: 10px; background: #e0eaff; padding: 8px 18px;')
         paste1_btn.clicked.connect(lambda: self.paste_from_clipboard(self.context1_text))
-        main_layout.addWidget(paste1_btn)
+        buttons_layout.addWidget(paste1_btn)
+        load_pdf_btn = QPushButton('Nahrát PDF')
+        load_pdf_btn.setFont(font_button)
+        load_pdf_btn.setStyleSheet('border-radius: 10px; background: #e0eaff; padding: 8px 18px;')
+        load_pdf_btn.clicked.connect(lambda: self.load_pdf(self.context1_text))
+        buttons_layout.addWidget(load_pdf_btn)
+        buttons_layout.addStretch()
+        main_layout.addLayout(buttons_layout)
 
         # YAML
         label2 = QLabel('Vlož YAML (testovací scénáře):')
@@ -218,6 +282,32 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
         if clipboard is not None:
             widget.setPlainText(clipboard.text())
 
+    def load_pdf(self, widget):
+        try:
+            file_path, _ = QFileDialog.getOpenFileName(
+                self, 'Vyber PDF soubor', '', 'PDF Files (*.pdf)'
+            )
+            if file_path:
+                try:
+                    import PyPDF2
+                    text_content = ''
+                    with open(file_path, 'rb') as pdf_file:
+                        pdf_reader = PyPDF2.PdfReader(pdf_file)
+                        for page in pdf_reader.pages:
+                            text_content += page.extract_text() + '\n'
+                    widget.setPlainText(text_content)
+                    QMessageBox.information(self, 'Úspěch', f'PDF soubor byl načten. Extrahováno {len(pdf_reader.pages)} stránek.')
+                except ImportError:
+                    QMessageBox.warning(
+                        self, 'Chybějící knihovna',
+                        'Pro načtení PDF je potřeba nainstalovat PyPDF2.\n\n'
+                        'Spusť: pip3 install PyPDF2'
+                    )
+                except Exception as e:
+                    QMessageBox.critical(self, 'Chyba', f'Nepodařilo se načíst PDF: {e}')
+        except Exception as e:
+            QMessageBox.critical(self, 'Chyba', f'Chyba při výběru souboru: {e}')
+
     def save_endpoint(self):
         endpoint = self.endpoint_input.text().strip()
         if not endpoint:
@@ -267,6 +357,7 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
             self.test_thread = TestRunnerThread()
             self.test_thread.line_signal.connect(self.append_result)
             self.test_thread.finished_signal.connect(self.on_test_finished)
+            self.test_thread.progress_signal.connect(self.loading_overlay.update_progress)
             self.test_thread.start()
         except Exception as e:
             self.result_output.setPlainText(f'Chyba při ukládání: {e}')

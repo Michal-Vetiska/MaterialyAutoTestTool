@@ -1,73 +1,92 @@
-Příprava deployinfa pro Core.Inbox
-
-    V první řadě je potřeba si najít All-In-One server pro danného zákazníka (např. MonacoBet.sk). IP adresy serverů se nachází na Confluence stránce Servis - Popis prostředí (https://synottech.atlassian.net/wiki/spaces/PROJ/pages/42733870/Servis+-+Popis+prost+ed)
-
-        Otevřeme si odkaz a najdeme zákazníka, kterého budeme řešit (v našem případě např. MonacoBet.sk) 
-
-        Otevřeme si dokument “Monacobet-sk-int - instance”, kde si najdeme All-In-One a připojíme se na server pomocí ip adresy serveru a nějaké aplikace pro vzdálený přístup (pro macos např windows app)
-
-    Nyní si otevřeme projekt “Core.Inbox” a půjdeme na tuto cestu: setup>Deploy>Monacobet>monacobet-sk-int_deployinfo.xml
-
-        pokud složka se souborem Monacobet neexistuje, tak založíme novou a zkopírujeme do ní nějaký jiný deployinfo, které jen upravíme například to ze sazky
-
-        takhle bude vypadat část kódu, který nás bude zajímat:
-
-<deployinfo product="Core" database="TST-SAZKA-SK" instanceName="Sazka-SK-INT" version="Instance" setupMode="ReleaseCreateOnly">
-
-
-	<var name="Infrastructure.Url" value="https://tst-s-sazka-sk.easit.cz" />
-	<var name="Admin.Url" value="https://tst-admin-sazka-sk.easit.cz" />
-
-	<var name="Customer.Name" value="sazka-sk" />
-	<var name="AccessKey" value="" />
-	<var name="EDF.Products"><![CDATA["Core.Inbox"]]></var>
-
-  <!-- PassportService url for ebetclient -->
-  <var name="PassportService.Url" value="https://tst-internal-sazka-sk.easit.cz" />
-  
-	<!-- <var name="ConnectionStrings.Kafka" value="base-infra-kafka-linux.sazka-sk-int.service.internal:9093" /> -->
-  <!-- <var name="ConnectionStrings.CoreInboxApi" value="http://core-core-inbox-api.sazka-sk-int.service.internal:8777" /> -->
-  
-  <var name="CORS.CoreInboxHub"><![CDATA["http://localhost:8891", "https://tst-casino-sazka-sk.easit.cz", "https://tst-muj-sazka-sk.easit.cz", "https://tst-moj-sazka-sk.easit.cz"]]></var>
-
-      <deploypath path="\\TST-SAZKA-SK\sazka-sk-int" >
-
-Nyní musíme upravit vše, kde je zmíněná sazka na monacobet instance…
-
-    Změna databáze
-
-        Hned první řádek máme vlastnost “database” nastavenou na "TST-SAZKA-SK" a “instanceName” na "Sazka-SK-INT". Hodnotu v “database” změníme podle jména serveru co můžeme najít podle zákazníka na odkazu viz. 1. krok, takže tam bude "TST-MONACO-SK" a “instanceName” změníme jen na "monacobet-sk-int"
-
-    Změna var proměnných
-
-        Dále máme var "Infrastructure.Url". Pro zjištění této hodnoty se budeme muset připojit na vzdálený server (v případě macu “windows app”) na ip adresu (lze najít v odkazu v 1. kroku hned pod jménem serveru, v našem případě to bude “10.18.10.101”). Na vzdáleném serveru si otevřeme ISS a otevřeme TST-MONACO-SK>Sites>monacobet-sk-int - EBet - EBet.Services.Infrastructure. Po rozkliknutí cesty je potřeba na pravé straně ISS v “Actions” otevřít “Bindings” a vybrat zápis co je “https” což bude v našem případě “tst-s-monacobet-sk.easit.cz” a tuto honotu dosadíme za var v našem novém deployinfu takže ten řádek bude vypadat takto:
-
-<var name="Infrastructure.Url" value="https://tst-s-monacobet-sk.easit.cz" />
-
-Následně "Admin.Url". Opět nalezneme v ISS na vzdáleném serveru na cestě TST-MONACO-SK>Sites>monacobet-sk-int - EBet - EBet.Common.Admin. Otevřeme si “Bindings” a opět i https zápis. Bude tam “tst-admin-monacobet-sk.easit.cz”. Kód následně upravíme:
-<var name="Admin.Url" value="https://tst-admin-monacobet-sk.easit.cz" />
-
-"Customer.Name" stačí jednoduše přepsat na název zákazníka, tzn takto:
-<var name="Customer.Name" value="monacobet-sk" />
-
-"PassportService.Url" nalezneme v ISS pod TST-MONACO-SK>Sites>monacobet-sk-int - EBet - EBet.Client.EBetWsServer.  U tohoto je to malinko jinak, nedáme tam automaticky https záznam (ikdyž by se nic nestalo a vlastně by to bylo správně), ale musíme si zkontrolovat edf.config, který na serveru najdeme v adresáři D:\monacobet-sk-int\Apps\edf.config a najdeme tam tuto část:
-<!-- !!!!!!!!!!!!!!!!!!!! obecná nastavení pro EBet.Client knihovnu !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! -->
-    <add key="ConnectedServerType" value="2"/>
-    <add key="WebServiceUrl" value="http://localhost:7070/"/>
-    <add key="TerminalExternalId" value="CZ-I"/>
-
-Vidíme klíč "WebServiceUrl". Nás ale bude zajímat jen ten port “7070” který použijeme tímto způsobem: 
-<var name="PassportService.Url" value="http://TST-MONACO-SK:7070/" /> 
-
-"CORS.CoreInboxHub" nalezneme v ISS ve dvou záznamech. TST-MONACO-SK>Sites>monacobet-sk-int - EBet - My.Web.New a TST-MONACO-SK>Sites>monacobet-sk-int - Casino - Casino.Web.Generic. Najdeme si bindings těchto 2 siteu a zapíšeme všechny https záznamy takto:
-<var name="CORS.CoreInboxHub">
-<![CDATA["https://tst-casino-monacobet-sk.easit.cz", 
-"https://tst-www-monacobet-sk.easit.cz", 
-"https://tst-moj-monacobet-sk.easit.cz"]]>
-</var>
-
-<deploypath path="\\TST-SAZKA-SK\sazka-sk-int" > jednoduše upravíme tak, aby to byl ve formátu “\\databaze\instanceName”, takže takto:
-
-            <deploypath path="\\TST-MONACO-SK\monacobet-sk-int" >
-
-Nyní máme připravený deployinfo u nového zákazníka v Core.Inbox thumbs up
+Konfigurace Core.Admin pro prostředí
+Zkrácený popis produktu:
+DeployInfo XML soubory slouží k definici konfigurace nasazení (deploymentu) pro jednotlivé instance aplikace 
+Core.Admin. Obsahují nastavení IIS, webových aplikací, aplikačních poolů a vazeb (bindings). Soubor určuje, kam se daná 
+instance deployuje a jak se má nakonfigurovat na serveru.
+Odkaz na technický list:
+Vazby
+Související aplikace:
+Core.Admin
+Core.Admin.Api
+Core.ARR
+Core.Persona
+Core.Identity
+ 
+Vazba na prostředí:
+DeployInfo je vždy specifické pro kombinaci zákazník–lokalizace–prostředí (např. tipsport-all-prod).
+Každé prostředí má:
+specifickou cestu k nasazení (\\{webserver}\{instance})
+vlastní IIS konfiguraci
+vlastní host headery a porty
+Konfigurace pro prostředí
+DeployInfo
+Slouží k popisu IIS konfigurace a cílových cest deploymentu.
+Co to je:
+XML soubor popisující kořenový element <deployinfo>, cestu <deploypath> a jednotlivé weby <web>.
+Cesty / umístění:
+Setup/deploy/{zakaznik}/{zakaznik}-{lokalizace}-{prostředí}_deployinfo.xml
+např.
+Setup/deploy/Tipsport//tipsport-all-prod_deployinfo.xml
+Struktura (zkrácený přehled):Dokumentace k Core.Admin
+1<?xml version="1.0" encoding="utf-8" ?>
+Appsettings
+Co to je:
+Konfigurační JSON soubory určující chování aplikace (connection strings, logování, feature flagy, endpoints).
+Cesty / umístění:
+Setup/Configuration/Shared/Core.admin/appsettings.json
+HCL
+Co to je:
+HashiCorp konfigurace využívaná pro Consul 
+Cesty / umístění:
+zatím žádná není, ale bude v:
+Setup/Configuration/Shared/Core.admin/
+Vytvořit task na OPS
+Typické požadavky při zakládání nové instance:
+vytvoření DNS záznamu pro {lokalizace}-{klient}-admin.easit.online
+vytvoření DNS pro HTTPS certifikát
+založení IIS site a application poolu
+otevření portů / firewall změny
+<další interní ops požadavky – doplnit>
+2<deployinfo product="Core" instanceName="{klient}-{lokalizace}-{prostredi}" database="{dbServe
+3  <deploypath path="\\{webserver}\{instance}" version="Instance">
+4
+5    <web name="WebSites\Core.Admin" deleteBeforeDeploy="false">
+6      <environment>
+7        <iis>
+8          <web>
+9            <appPool Framework="NoManagedCode" />
+1 0            <bindings>
+1 1              <binding Type="Http" Port="80" HostHeader="{hostHeader}" />
+1 2              <binding Type="Https" Port="443" HostHeader="{hostHeader}" />
+1 3            </bindings>
+1 4          </web>
+1 5        </iis>
+1 6      </environment>
+1 7    </web>
+1 8
+1 9    <web name="WebSites\Core.Admin.Api">
+2 0      <environment>
+2 1        <iis>
+2 2          <web AppName="WebSites\Core.Admin" Path="/api">
+2 3            <appPool Framework="NoManagedCode" />
+2 4          </web>
+2 5        </iis>
+2 6      </environment>
+2 7    </web>
+2 8
+2 9  </deploypath>
+3 0</deployinfo>
+Troubleshooting
+FAQ – kde hledat problémy
+Když aplikace nejede:
+zkontrolovat IIS bindings → odpovídají hostheaderu v DeployInfo
+ověřit, že existuje target cesta \\{webserver}\{instance}
+ověřit validitu XML DeployInfo (neuzavřené elementy, špatné atributy)
+Když nefunguje Admin.Api:
+podívat se na parametr AppName a Path="/api"
+validovat, že API běží pod správným parent webem
+Když nesedí databáze:
+zkontrolovat atribut <deployinfo database="...">
+porovnat s dokumentací instancí zákazníků v Confluence
+Kde hledat logy:
+Nomad logy

@@ -1,24 +1,19 @@
 tests:
-  inbox_deployinfo:
-    - question: Kde najdu IP adresu serveru pro připojení k All-In-One instanci zákazníka MonacoBet.sk?
+  default:
+    - id: 1
+      question: "Jaké aplikace jsou součástí ekosystému Core.Admin?"
       expected_keywords:
-        - Confluence
-        - Servis - Popis prostředí
-        - https://synottech.atlassian.net/wiki/spaces/PROJ/pages/42733870/Servis+-+Popis+prost+ed
-        - All-In-One
-        - vzdálený přístup
+        - "Core.Admin"
+        - "Core.Admin.Api"
+        - "Core.ARR"
+        - "Core.Persona"
+        - "Core.Identity"
 
-    - question: Jak zjistím hodnotu pro PassportService.Url v deployinfu pro MonacoBet.sk?
-      expected_keywords:
-        - edf.config
-        - WebServiceUrl
-        - 7070
-        - http://TST-MONACO-SK:7070/
 
-    - question: Jak vytvořím nový deployinfo soubor pro Core.Inbox, pokud pro zákazníka MonacoBet ještě neexistuje?
+    - id: 2
+      question: "Na čem je DeployInfo vždy závislé?"
       expected_keywords:
-        - složka Monacobet
-        - zkopírujeme
-        - Sazka
-        - upravit hodnoty
-        - monacobet-sk-int_deployinfo.xml
+        - "zákazník"
+        - "lokalizace"
+        - "prostředí"
+        - "kombinace"

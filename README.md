@@ -5,10 +5,11 @@ Moderní univerzální desktopová aplikace pro testování chatbot materiálů 
 ## Požadavky
 - Python 3.8+
 - Knihovny: PyQt5, requests, pyyaml
+- Volitelně: PyPDF2 (pro nahrávání PDF dokumentů)
 
 Nainstaluj je příkazem:
 ```bash
-pip3 install PyQt5 requests pyyaml
+pip3 install PyQt5 requests pyyaml PyPDF2
 ```
 
 ## Spuštění aplikace
@@ -20,7 +21,9 @@ pip3 install PyQt5 requests pyyaml
 
 ## Použití
 1. **Zadej endpoint chatbota** (např. `http://127.0.0.1:1234`) a ulož.
-2. **Vlož obsah materiálu** (context1.txt) a YAML scénáře do příslušných polí (nebo použij tlačítko „Vložit ze schránky“).
+2. **Vlož obsah materiálu** (context1.txt) a YAML scénáře do příslušných polí:
+   - Použij tlačítko **"Vložit ze schránky"** pro vložení textu ze schránky
+   - Nebo použij tlačítko **"Nahrát PDF"** pro načtení textu z PDF dokumentu (vyžaduje PyPDF2)
 3. Klikni na **Spustit test**.
 4. Výsledky a souhrn se zobrazí v aplikaci.
 

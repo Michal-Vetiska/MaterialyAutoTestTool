@@ -38,25 +38,40 @@ def ask_question(question, context=None):
     return response["choices"][0]["message"]["content"]
 
 def evaluate_answer(answer, expected_keywords):
-    return all(
-        any(re.search(re.escape(str(keyword)), answer, re.IGNORECASE) for keyword in (group if isinstance(group, (list, tuple)) else [group]))
-        for group in expected_keywords
-    )
+    answer_lower = answer.lower()
+    for keyword in expected_keywords:
+        # pokud je keyword list, projdi všechny varianty
+        if isinstance(keyword, (list, tuple)):
+            if not any(k.lower() in answer_lower for k in keyword):
+                return False
+        else:
+            if keyword.lower() not in answer_lower:
+                return False
+    return True
 
 with open("test_core_messenger_and_inbox.yaml", "r", encoding="utf-8") as f:
     data = yaml.safe_load(f)
 
+# Spočítat celkový počet testů
+total_tests = 0
+for difficulty, tests in data["tests"].items():
+    total_tests += len(tests)
+
 passed_count = 0
 failed_count = 0
 total_count = 0
+current_test = 0
 
 for difficulty, tests in data["tests"].items():
     print(f"\n=== {difficulty.upper()} TESTS ===")
     for t in tests:
+        current_test += 1
         question = t["question"]
         expected = t["expected_keywords"]
         print(f"\nQ: {question}")
         answer = ask_question(question, context)
+        # Vypiš progress až po získání odpovědi od modelu
+        print(f"PROGRESS: {current_test}/{total_tests}", flush=True)
         print(f"A: {answer}")
         passed = evaluate_answer(answer, expected)
         print("✅ Passed" if passed else "❌ Failed")
